@@ -65,8 +65,8 @@ Frontend + edge:
 - [ ] Route 53 ALIAS records: apex + `www` → frontend CloudFront distribution
 
 Identity/access (do this first, before anything else):
-- [ ] Create a non-root **IAM user** for yourself with MFA enabled; stop using the root account day-to-day (root stays only for billing/account-level actions)
-- [ ] Give that user a scoped policy (Lightsail, S3, CloudFront, Route 53, ACM, Budgets, SSM) rather than `AdministratorAccess` once you know what you're actually touching
+- [x] Create a non-root **IAM user** for yourself with MFA enabled; stop using the root account day-to-day (root stays only for billing/account-level actions) — done 2026-10-08, root + IAM user both have MFA, signed in as the IAM user going forward
+- [ ] Give that user a scoped policy (Lightsail, S3, CloudFront, Route 53, ACM, Budgets, SSM) rather than `AdministratorAccess` once you know what you're actually touching — currently on `AdministratorAccess` while still discovering the service list; revisit once the build-out stabilizes
 
 Secrets + config:
 - [ ] Store `JWT_SECRET`, Atlas connection string, Anthropic API key in **SSM Parameter Store** (standard tier is free) — not Secrets Manager, which bills per secret per month
@@ -79,10 +79,10 @@ Secrets + config:
 
 Atlas is wire-compatible with self-hosted MongoDB, so this is mostly a connection-string swap, not a code change.
 
-- [ ] Create a free **M0** Atlas cluster (shared, 512MB storage cap — fine for text/metadata at 20 users, see photo caveat below)
-- [ ] Create an Atlas DB user scoped to this app's database only
-- [ ] **Network Access**: allowlist the Lightsail instance's static IP specifically — not `0.0.0.0/0` (M0 doesn't support VPC peering/private endpoints, so IP allowlisting is the only option, but scope it tight)
-- [ ] Point `MONGODB_URI` at the Atlas connection string; no Mongoose/driver code changes needed
+- [x] Create a free **M0** Atlas cluster (shared, 512MB storage cap — fine for text/metadata at 20 users, see photo caveat below) — `larchbound-cluster`, AWS us-east-1
+- [x] Create an Atlas DB user scoped to this app's database only
+- [x] Point `MONGODB_URI` at the Atlas connection string and confirm `MongoDB connected` locally — done; root cause of the first failed attempt was the Network Access allowlist (stale/missing IP), not credentials or the connection string itself
+- [ ] **Network Access**: allowlist entry is currently a temporary dev IP, not the final state — once Lightsail exists, add its static IP and remove the temporary entry; never leave this on `0.0.0.0/0` (M0 doesn't support VPC peering/private endpoints, so IP allowlisting is the only access control available, which makes scoping it tight the only real protection)
 - [ ] If there's real data worth keeping in the current Docker `mongodb` container: `mongodump --uri <local> --gzip --archive=dump.gz` then `mongorestore --uri <atlas-uri> --gzip --archive=dump.gz` (brief write-downtime during the dump). If current data is disposable dev/test data, skip straight to pointing at Atlas.
 
 **Flag for later:** the planned Photo Upload feature (per `TODO.md`) currently reads "store alongside the photo reference in MongoDB" — same pattern as the existing avatar upload, which stores images as base64 data URLs directly on the document. That's fine for one 5MB avatar per user, but doing the same for trip photos will blow through M0's 512MB cap fast and risks hitting MongoDB's 16MB-per-document BSON limit. Before building Photo Upload for real: store images in **S3**, keep only the S3 key/URL on the `Photo` document in Mongo.
