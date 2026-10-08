@@ -1,0 +1,13 @@
+# Production compose file for the Lightsail box — API only.
+# Frontend is served from S3/CloudFront; MongoDB is Atlas; auth is local JWT (no Keycloak).
+# Secrets (JWT_SECRET, MONGODB_URI, ANTHROPIC_API_KEY, CORS_ORIGIN) live in ./server/.env on the
+# box itself — never committed. See TODO-launch.md §3.
+services:
+  larchbound-api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    env_file: ./server/.env
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
