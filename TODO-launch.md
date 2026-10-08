@@ -18,9 +18,7 @@ No direct collisions found against existing apps/companies for Larchbound (a cou
 
 - [x] Pick final name — **LarchBound**
 - [ ] Re-check domain availability right before buying (don't trust the above past a day or two)
-- [ ] Register `larchbound.com` at **Cloudflare** (registrar pricing is at-cost, ~$9–10/yr for `.com`, free WHOIS privacy) rather than Route 53 directly (~$12–14/yr all-in with the hosted zone) — saves a few dollars/year for identical functionality
-- [ ] Create a **Route 53 public hosted zone** for the domain regardless of where it's registered ($0.50/mo) — this is what makes AWS (ACM, CloudFront) able to manage DNS for it
-- [ ] At Cloudflare, point the domain's nameservers at the 4 NS records Route 53 gives you for the hosted zone (makes Route 53 authoritative for DNS; Cloudflare stays registrar-of-record only)
+- [ ] Register `larchbound.com` directly through **Route 53** (~$10.56/yr for `.com` — Cloudflare's at-cost price turned out to be a wash, not worth a second account/registrar for a few cents/year). Registering here auto-creates the hosted zone ($0.50/mo) as part of the purchase — no separate nameserver-delegation step needed, and WHOIS privacy is included free either way.
 - [x] Rename the repo/package: `package.json` name → `larchbound`, README, `CLAUDE.md` title/references, `ridgeline-auth` localStorage key → `larchbound-auth`, Docker image/container names, hardcoded "Ridgeline" strings in UI copy — all done in-repo
 - [ ] Rename the GitHub repo itself (was blocked on this pass — no `gh` CLI installed locally; do it manually via GitHub Settings → repository name, or install `gh` and run `gh repo rename larchbound`), then update the local git remote: `git remote set-url origin https://github.com/cgmarkham64/<new-name>.git`
 
