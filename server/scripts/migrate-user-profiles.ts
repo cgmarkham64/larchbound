@@ -14,7 +14,7 @@ import 'dotenv/config'
 import mongoose from 'mongoose'
 import { UserProfile } from '../src/models/UserProfile'
 
-const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/ridgeline'
+const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/larchbound'
 
 async function main() {
   await mongoose.connect(MONGODB_URI)

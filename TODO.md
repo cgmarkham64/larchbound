@@ -1,4 +1,4 @@
-# Ridgeline — TODO
+# LarchBound — TODO
 
 ---
 
@@ -10,7 +10,7 @@ See `TODO-launch.md` for the rename + AWS + closed-beta rollout plan (separate i
 
 ### Trips + Plan Wizard Unification
 
-Every trip in Ridgeline starts as a plan. The Plan Wizard IS how trips are created. The "Trip Log" becomes "Trips" — a unified list of everything from active plans through completed expeditions, each with a status chip. This work retires the old New Trip dialog and tightly couples the Plan model to the Trip model so journals, gear, and the wizard all share one record.
+Every trip in LarchBound starts as a plan. The Plan Wizard IS how trips are created. The "Trip Log" becomes "Trips" — a unified list of everything from active plans through completed expeditions, each with a status chip. This work retires the old New Trip dialog and tightly couples the Plan model to the Trip model so journals, gear, and the wizard all share one record.
 
 ---
 
@@ -123,7 +123,7 @@ Collage/grid of all photos across all trips with basic metadata (trip name, date
 
 ### Gear (`/gear`)
 Full gear inventory system:
-- System catalog of all gear across Ridgeline users, de-duplicated and AI-augmented (verify weight/specs from manufacturer sites).
+- System catalog of all gear across LarchBound users, de-duplicated and AI-augmented (verify weight/specs from manufacturer sites).
 - Users build loadouts from the system catalog; gear not in the catalog gets added to it.
 - Loadouts selectable per trip; modifiable on a trip-by-trip basis (ask user whether changes update the base loadout or stay trip-specific).
 - Loadouts editable from both the `/gear` page and the Gear stage in the Plan Wizard.

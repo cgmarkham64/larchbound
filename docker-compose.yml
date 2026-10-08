@@ -1,5 +1,5 @@
 networks:
-  ridgeline-net:
+  larchbound-net:
     driver: bridge
 
 volumes:
@@ -11,7 +11,7 @@ services:
   mongodb:
     image: mongo:8
     networks:
-      - ridgeline-net
+      - larchbound-net
     volumes:
       - mongo-data:/data/db
     restart: unless-stopped
@@ -23,7 +23,7 @@ services:
 
   # ── Keycloak (dev mode — embedded H2, no TLS) ──────────────────────────────
   # Realm + client setup: after first boot, visit http://localhost:8080 and
-  # create realm "Ridgeline", client "ridgeline-app" (public, PKCE enabled),
+  # create realm "LarchBound", client "larchbound-app" (public, PKCE enabled),
   # and set redirect URIs to http://localhost:3000/*.
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
@@ -40,7 +40,7 @@ services:
     ports:
       - "8080:8080"
     networks:
-      - ridgeline-net
+      - larchbound-net
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200'"]
@@ -50,34 +50,34 @@ services:
       start_period: 60s
 
   # ── API ────────────────────────────────────────────────────────────────────
-  ridgeline-api:
+  larchbound-api:
     build:
       context: ./server
       dockerfile: Dockerfile
     env_file: ./server/.env         # loads PORT, JWT_SECRET, ANTHROPIC_API_KEY from local file
     environment:
-      MONGODB_URI: mongodb://mongodb:27017/ridgeline
+      MONGODB_URI: mongodb://mongodb:27017/larchbound
       CORS_ORIGIN: http://localhost:3000
-      KEYCLOAK_JWKS_URI: http://keycloak:8080/realms/Ridgeline/protocol/openid-connect/certs
-      KEYCLOAK_ISSUER: http://localhost:8080/realms/Ridgeline
+      KEYCLOAK_JWKS_URI: http://keycloak:8080/realms/LarchBound/protocol/openid-connect/certs
+      KEYCLOAK_ISSUER: http://localhost:8080/realms/LarchBound
     ports:
       - "8000:8000"                 # exposed for direct API access / debugging
     depends_on:
       mongodb:
         condition: service_healthy
     networks:
-      - ridgeline-net
+      - larchbound-net
     restart: unless-stopped
 
   # ── Frontend (nginx) ───────────────────────────────────────────────────────
-  ridgeline-frontend:
+  larchbound-frontend:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "3000:80"
     depends_on:
-      - ridgeline-api
+      - larchbound-api
     networks:
-      - ridgeline-net
+      - larchbound-net
     restart: unless-stopped

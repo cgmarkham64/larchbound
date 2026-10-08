@@ -1,4 +1,4 @@
-# Ridgeline
+# LarchBound
 
 An outdoor/hiking trip planning and logging app with a React frontend and Express/MongoDB backend.
 
@@ -9,7 +9,7 @@ An outdoor/hiking trip planning and logging app with a React frontend and Expres
 - **Build**: Vite 8
 - **Routing**: TanStack Router (code-based, auth guard via `_authenticated` layout route)
 - **Data fetching**: TanStack Query + Axios
-- **State**: Zustand (auth persisted to localStorage under key `ridgeline-auth`)
+- **State**: Zustand (auth persisted to localStorage under key `larchbound-auth`)
 - **Forms**: React Hook Form + Zod
 - **Styling**: Tailwind CSS v4 — always prefer Tailwind utility classes over inline `style={{}}` props or custom CSS. Use `hover:`, `focus:`, `group`/`group-hover:` pseudo-classes instead of JS event handlers for style changes. Only use inline styles for truly dynamic/computed values (e.g. colors from variables/props) or SVG-specific attributes.
 - **Type scale** — use the semantic Tailwind tokens defined in `@theme` in `src/index.css`. Do not use arbitrary `text-[Xpx]` classes for sizes that have a token:
@@ -99,7 +99,7 @@ src/
                   #     IconDownload, IconFile, IconCircle.
                   #   Waypoint/contextual (amber-colored): IconTent, IconMountain, IconWater, IconSun.
     journal/      # DaySelector.tsx, JournalSection.tsx (wildlife + companions panels;
-                  #   companions always searches Ridgeline users as you type; amber chip = user; auto-shares on save)
+                  #   companions always searches LarchBound users as you type; amber chip = user; auto-shares on save)
     layout/       # IconRail.tsx (nav rail + notification bell + account avatar + sign-out),
                   #   AccountDialog.tsx (edit name, change password, upload/remove avatar),
                   #   NotificationBell.tsx (badge + popover; accept/decline invites, dismiss, mark all read)
@@ -163,12 +163,12 @@ server/
 ```
 Dockerfile          # Frontend: node:22 Vite build → nginx:alpine; VITE_API_URL='' (relative paths)
 server/Dockerfile   # Backend: tsc build → node:22-alpine; runs node dist/index.js
-nginx.conf          # Serves SPA (try_files fallback) + reverse-proxies /api/* → ridgeline-api:8000
-docker compose.yml  # Four services on ridgeline-net:
+nginx.conf          # Serves SPA (try_files fallback) + reverse-proxies /api/* → larchbound-api:8000
+docker compose.yml  # Four services on larchbound-net:
                     #   mongodb (mongo:8, named volume mongo-data)
                     #   keycloak (quay.io/keycloak/keycloak:26.0, start-dev, port 8080)
-                    #   ridgeline-api (env_file: server/.env, overrides MONGODB_URI + CORS_ORIGIN)
-                    #   ridgeline-frontend (nginx, port 3000)
+                    #   larchbound-api (env_file: server/.env, overrides MONGODB_URI + CORS_ORIGIN)
+                    #   larchbound-frontend (nginx, port 3000)
 ```
 
 ### API Endpoints
@@ -254,7 +254,7 @@ See `TODO.md` for detailed task breakdowns. Feature direction:
 |                    | Local dev                                                                | Docker                                                                    |
 |--------------------|--------------------------------------------------------------------------|---------------------------------------------------------------------------|
 | Frontend           | http://localhost:5173 (Vite HMR)                                         | http://localhost:3000 (nginx)                                             |
-| API                | http://localhost:8000 (absolute URL)                                     | relative paths, proxied by nginx → `ridgeline-api:8000`                   |
+| API                | http://localhost:8000 (absolute URL)                                     | relative paths, proxied by nginx → `larchbound-api:8000`                   |
 | Auth               | JWT/HS256 via `JWT_SECRET`; `/login` + `/register` pages work            | Keycloak OIDC/PKCE via `keycloak-js`; login/register redirect to Keycloak |
 | Token verification | `verifyToken()` uses `JWT_SECRET` (HS256) when `KEYCLOAK_JWKS_URI` unset | `verifyToken()` fetches JWKS from Keycloak and verifies RS256             |
 | MongoDB            | Homebrew `mongodb-community@8.0`                                         | `mongodb` container with named volume `mongo-data`                        |
@@ -263,8 +263,8 @@ See `TODO.md` for detailed task breakdowns. Feature direction:
 **Local dev auth** — `KEYCLOAK_JWKS_URI` and `KEYCLOAK_ISSUER` must be absent/commented out in `server/.env` (default in `.env.example`). The frontend detects no Keycloak config and falls back to the `/login` page with `POST /api/auth/login`.
 
 **Docker/Keycloak first-time setup** — after `docker compose up --build`, visit http://localhost:8080, sign in as `admin/admin`, then:
-1. Create realm `Ridgeline`
-2. Create client `ridgeline-app` (OpenID Connect, public, PKCE S256 enabled)
+1. Create realm `LarchBound`
+2. Create client `larchbound-app` (OpenID Connect, public, PKCE S256 enabled)
 3. Set valid redirect URIs to `http://localhost:3000/*` and web origins to `http://localhost:3000`
 
 Subsequent `docker compose up` calls don't need the realm re-created if the `keycloak-data` volume persists.
@@ -274,7 +274,7 @@ Subsequent `docker compose up` calls don't need the realm re-created if the `key
 - GET /api/trips/:id — populates the full Loadout (but not the loadout's items — you'd need a second populate for that; we can address it when you hook up the frontend)
 - Auth middleware is wired in — all API routes except `/api/auth` require a valid Bearer JWT. `req.user.sub` is available in every route handler.
 - `CORS_ORIGIN` env var controls Express CORS allowed origin (defaults to `http://localhost:5173` for local dev; docker compose sets it to `http://localhost:3000`)
-- In Docker, `VITE_API_URL` is built as empty string so axios uses relative paths; nginx proxies `/api/*` to `ridgeline-api:8000` preserving the full path
+- In Docker, `VITE_API_URL` is built as empty string so axios uses relative paths; nginx proxies `/api/*` to `larchbound-api:8000` preserving the full path
 - Find out if OnX Backcountry offer any integrations for personal app projects to import data and items from them, brainstorm ideas to integrate this app into theirs
 
 

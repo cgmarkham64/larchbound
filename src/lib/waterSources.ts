@@ -335,7 +335,7 @@ export async function fetchDetectedWaterSources(
   if (routeCoords.length < 2) return []
 
   const bbox = computeBbox(routeCoords)
-  const cacheKey = `ridgeline-water-${bbox}`
+  const cacheKey = `larchbound-water-${bbox}`
   const cached = readCache(cacheKey)
   if (cached) return cached
 

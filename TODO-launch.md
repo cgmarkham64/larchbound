@@ -21,8 +21,8 @@ No direct collisions found against existing apps/companies for Larchbound (a cou
 - [ ] Register `larchbound.com` at **Cloudflare** (registrar pricing is at-cost, ~$9–10/yr for `.com`, free WHOIS privacy) rather than Route 53 directly (~$12–14/yr all-in with the hosted zone) — saves a few dollars/year for identical functionality
 - [ ] Create a **Route 53 public hosted zone** for the domain regardless of where it's registered ($0.50/mo) — this is what makes AWS (ACM, CloudFront) able to manage DNS for it
 - [ ] At Cloudflare, point the domain's nameservers at the 4 NS records Route 53 gives you for the hosted zone (makes Route 53 authoritative for DNS; Cloudflare stays registrar-of-record only)
-- [ ] Rename the repo/package: `package.json` name → `larchbound`, README, `CLAUDE.md` title/references, `ridgeline-auth` localStorage key → `larchbound-auth`, Docker image/container names, any hardcoded "Ridgeline" strings in UI copy
-- [ ] Decide whether to keep `ridgeline` as the GitHub repo name (cosmetic, low priority) or rename the repo too
+- [x] Rename the repo/package: `package.json` name → `larchbound`, README, `CLAUDE.md` title/references, `ridgeline-auth` localStorage key → `larchbound-auth`, Docker image/container names, hardcoded "Ridgeline" strings in UI copy — all done in-repo
+- [ ] Rename the GitHub repo itself (was blocked on this pass — no `gh` CLI installed locally; do it manually via GitHub Settings → repository name, or install `gh` and run `gh repo rename larchbound`), then update the local git remote: `git remote set-url origin https://github.com/cgmarkham64/<new-name>.git`
 
 ---
 
@@ -54,7 +54,7 @@ The main thing that would have threatened the $10/mo ceiling was **AWS's public 
 **Auth decision: local JWT, not Keycloak, for v1.** Already built (`server/src/routes/localAuth.ts`), zero extra cost, no extra container, no RAM pressure on the instance. Reviewed separately for security fit at this scale (20 invited friends) — bcrypt + rate-limiting + algorithm-pinned verification are solid; the two real residual risks are the bearer token living in `localStorage` (XSS exposure, no `httpOnly` boundary) and no server-side revocation (a leaked token is live until it expires). Both are acceptable tradeoffs for a closed group of people you actually know, not for a genuinely public product. Keycloak remains a documented fast-follow (§7) once there's budget headroom and/or the beta outgrows "people I personally invited."
 
 Compute (Lightsail, $5/mo plan):
-- [ ] Docker Compose on the instance: `ridgeline-api` container only — **drop the local `mongodb` container** (→ Atlas) and **drop nginx-serving-frontend** (→ S3/CloudFront)
+- [ ] Docker Compose on the instance: `larchbound-api` container only — **drop the local `mongodb` container** (→ Atlas) and **drop nginx-serving-frontend** (→ S3/CloudFront)
 - [ ] Set `CORS_ORIGIN` to the real frontend domain (not localhost) in the prod env
 - [ ] Confirm `KEYCLOAK_JWKS_URI` / `KEYCLOAK_ISSUER` stay **unset** in prod so `verifyToken()` takes the local HS256 path (per `server/src/middleware/auth.ts`)
 

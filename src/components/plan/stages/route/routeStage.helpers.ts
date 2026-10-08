@@ -209,7 +209,7 @@ export function buildGpx(coords: [number, number, number][], name: string): stri
     `    <trkpt lat="${lat}" lon="${lon}">${ele ? `<ele>${ele}</ele>` : ''}</trkpt>`
   ).join('\n')
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Ridgeline" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="LarchBound" xmlns="http://www.topografix.com/GPX/1/1">
   <trk>
     <name>${name}</name>
     <trkseg>
@@ -296,7 +296,7 @@ async function previewFromStraightLine(start: [number, number], end: [number, nu
   const mi = haversinePathMiles(path)
   const sampled = path.filter((_, i) => i % 2 === 0 || i === path.length - 1)
 
-  const cacheKey = `ridgeline-elev-${roundedCoordKey(...start, ...end)}`
+  const cacheKey = `larchbound-elev-${roundedCoordKey(...start, ...end)}`
   const cached = readCachedTTL<number[]>(cacheKey, GEO_CACHE_TTL_MS)
   const sparkElevs = cached ?? await fetchElevationLookup(sampled)
   if (!cached && sparkElevs.length > 0) writeCachedTTL(cacheKey, sparkElevs)
@@ -394,7 +394,7 @@ export function fetchSunTimes(
 }
 
 export async function reverseGeocode(lat: number, lng: number): Promise<string> {
-  const cacheKey = `ridgeline-revgeo-${roundedCoordKey(lat, lng)}`
+  const cacheKey = `larchbound-revgeo-${roundedCoordKey(lat, lng)}`
   const cached = readCachedTTL<string>(cacheKey, GEO_CACHE_TTL_MS)
   if (cached !== null) return cached
 

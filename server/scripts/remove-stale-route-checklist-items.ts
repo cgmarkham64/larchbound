@@ -13,7 +13,7 @@ import 'dotenv/config'
 import mongoose from 'mongoose'
 import { Plan } from '../src/models/Plan'
 
-const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/ridgeline'
+const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/larchbound'
 const DRY_RUN    = process.argv.includes('--dry-run')
 
 const STALE_ITEMS = ['Partners added', 'Partners reviewed']

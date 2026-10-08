@@ -26,12 +26,12 @@ export function CompanionSearchDropdown({ searching, results, onSelect }: {
             </div>
             <div className="min-w-0">
               <div className="font-sans text-body-sm font-medium text-text truncate">{user.name}</div>
-              <div className="font-mono text-label text-text-dim">Ridgeline user — will be invited</div>
+              <div className="font-mono text-label text-text-dim">LarchBound user — will be invited</div>
             </div>
           </button>
         ))
       ) : (
-        <div className="px-3 py-2.5 font-mono text-caption text-text-dim">No Ridgeline users found — will be saved as a name only</div>
+        <div className="px-3 py-2.5 font-mono text-caption text-text-dim">No LarchBound users found — will be saved as a name only</div>
       )}
     </div>
   )

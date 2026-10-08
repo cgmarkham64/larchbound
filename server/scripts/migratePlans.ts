@@ -14,7 +14,7 @@ import mongoose from 'mongoose'
 import { Trip } from '../src/models/Trip'
 import { Plan } from '../src/models/Plan'
 
-const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/ridgeline'
+const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/larchbound'
 const DRY_RUN = process.argv.includes('--dry-run')
 
 // Best-effort parse of freeform date range strings like "Jun 1 – Jun 8, 2025"

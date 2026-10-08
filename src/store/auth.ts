@@ -20,6 +20,6 @@ export const useAuthStore = create<AuthStore>()(
       updateUser: (patch) =>
         set((s) => ({ user: s.user ? { ...s.user, ...patch } : s.user })),
     }),
-    { name: 'ridgeline-auth' }
+    { name: 'larchbound-auth' }
   )
 )

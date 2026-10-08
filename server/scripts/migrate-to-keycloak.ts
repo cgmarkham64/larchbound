@@ -10,16 +10,16 @@
  *
  * Prerequisites:
  *   - Docker stack running: docker compose up
- *   - Realm "Ridgeline" and client "ridgeline-app" already created in Keycloak
+ *   - Realm "LarchBound" and client "larchbound-app" already created in Keycloak
  *
  * Run:
  *   cd server
  *   npx tsx scripts/migrate-to-keycloak.ts
  *
  * Override defaults with env vars:
- *   MONGODB_URI   (default: mongodb://localhost:27017/ridgeline)
+ *   MONGODB_URI   (default: mongodb://localhost:27017/larchbound)
  *   KEYCLOAK_URL  (default: http://localhost:8080)
- *   KEYCLOAK_REALM (default: Ridgeline)
+ *   KEYCLOAK_REALM (default: LarchBound)
  *   KEYCLOAK_ADMIN_USER (default: admin)
  *   KEYCLOAK_ADMIN_PASS (default: admin)
  */
@@ -32,9 +32,9 @@ import { Loadout } from '../src/models/Loadout'
 import { GearItem } from '../src/models/GearItem'
 import { Notification } from '../src/models/Notification'
 
-const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/ridgeline'
+const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/larchbound'
 const KEYCLOAK_URL = process.env.KEYCLOAK_URL ?? 'http://localhost:8080'
-const REALM = process.env.KEYCLOAK_REALM ?? 'Ridgeline'
+const REALM = process.env.KEYCLOAK_REALM ?? 'LarchBound'
 const ADMIN_USER = process.env.KEYCLOAK_ADMIN_USER ?? 'admin'
 const ADMIN_PASS = process.env.KEYCLOAK_ADMIN_PASS ?? 'admin'
 

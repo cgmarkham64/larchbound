@@ -12,8 +12,8 @@ COPY . .
 # Keycloak vars point to the browser-facing Keycloak URL (always localhost from the browser).
 ARG VITE_API_URL=
 ARG VITE_KEYCLOAK_URL=http://localhost:8080
-ARG VITE_KEYCLOAK_REALM=Ridgeline
-ARG VITE_KEYCLOAK_CLIENT_ID=ridgeline-app
+ARG VITE_KEYCLOAK_REALM=LarchBound
+ARG VITE_KEYCLOAK_CLIENT_ID=larchbound-app
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_KEYCLOAK_URL=$VITE_KEYCLOAK_URL
 ENV VITE_KEYCLOAK_REALM=$VITE_KEYCLOAK_REALM

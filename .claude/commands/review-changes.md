@@ -8,7 +8,7 @@ Steps:
 Brief the subagent with this prompt (fill in the actual diff and file list):
 
 ---
-You are a senior engineer doing a cold code review of the following diff from the Ridgeline project — a React 19 / TypeScript frontend with an Express/MongoDB backend.
+You are a senior engineer doing a cold code review of the following diff from the LarchBound project — a React 19 / TypeScript frontend with an Express/MongoDB backend.
 
 Tech context:
 - Frontend: React 19, TanStack Router, TanStack Query, Zustand, React Hook Form + Zod, Tailwind CSS v4

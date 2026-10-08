@@ -2,13 +2,13 @@ export function CompanionTagList({ tags, onChange }: { tags: string[]; onChange:
   return (
     <>
       {tags.map((tag) => {
-        const isRidgeline = tag.startsWith('@')
-        const display = isRidgeline ? tag.slice(1) : tag
+        const isAppUser = tag.startsWith('@')
+        const display = isAppUser ? tag.slice(1) : tag
         return (
           <span
             key={tag}
             className={`flex items-center gap-1 border rounded-sm px-2 py-0.5 font-mono text-caption ${
-              isRidgeline
+              isAppUser
                 ? 'bg-amber-dim border-amber-border text-amber'
                 : 'bg-surface-2 border-border text-text-mid'
             }`}

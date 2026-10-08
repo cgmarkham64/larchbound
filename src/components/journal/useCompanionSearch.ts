@@ -15,7 +15,7 @@ interface AddTagDeps {
 function commitTag(label: string, sub: string | undefined, deps: AddTagDeps) {
   const { tags, onChange, onMentionAdded, setInput, setOpen } = deps
   const trimmed = label.trim()
-  // @ prefix discriminates Ridgeline users from free-text names
+  // @ prefix discriminates app users from free-text names
   const stored = sub ? `@${trimmed}` : trimmed
   if (!stored || tags.includes(stored)) return
   onChange([...tags, stored])

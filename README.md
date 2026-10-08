@@ -1,4 +1,4 @@
-# Ridgeline
+# LarchBound
 
 An outdoor and hiking trip planning and logging app. Plan trips through a seven-stage wizard (route, weather, permits, food, gear, departure, journal), log completed trips, import GPX tracks, manage gear loadouts, and browse photos — all in one place.
 
@@ -49,8 +49,8 @@ docker compose up --build
 
 **First-time Keycloak setup** (only needed once — persists across restarts as long as the `keycloak-data` volume exists):
 1. Visit http://localhost:8080, sign in as `admin / admin`
-2. Create realm: `Ridgeline`
-3. Create client: `ridgeline-app` (OpenID Connect, public, PKCE S256 enabled)
+2. Create realm: `LarchBound`
+3. Create client: `larchbound-app` (OpenID Connect, public, PKCE S256 enabled)
 4. Set valid redirect URIs to `http://localhost:3000/*` and web origins to `http://localhost:3000`
 
 To stop: `docker compose down`  
@@ -106,7 +106,7 @@ npm run dev:all
 ## Project Structure
 
 ```
-ridgeline/
+larchbound/
 ├── src/                        # Frontend
 │   ├── components/
 │   │   ├── journal/            # DaySelector, JournalSection

@@ -133,7 +133,7 @@ export function randomSaying(): Saying {
 
 export const PERMIT_LOOKUP_SAYINGS: Saying[] = [
   {
-    text: 'Ridgeline is reading every sign on the trail — even the ones half-covered in lichen.',
+    text: 'LarchBound is reading every sign on the trail — even the ones half-covered in lichen.',
     tag: 'looking for the needle in the haystack',
   },
   {
@@ -145,7 +145,7 @@ export const PERMIT_LOOKUP_SAYINGS: Saying[] = [
     tag: 'looking for the needle in the haystack',
   },
   {
-    text: 'Ridgeline found the ranger station. Now checking if they have WiFi.',
+    text: 'LarchBound found the ranger station. Now checking if they have WiFi.',
     tag: 'looking for the needle in the haystack',
   },
   {
@@ -153,7 +153,7 @@ export const PERMIT_LOOKUP_SAYINGS: Saying[] = [
     tag: 'looking for the needle in the haystack',
   },
   {
-    text: "There's no permit for curiosity — but Ridgeline looked it up just to be sure.",
+    text: "There's no permit for curiosity — but LarchBound looked it up just to be sure.",
     tag: 'looking for the needle in the haystack',
   },
   {
