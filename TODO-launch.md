@@ -1,4 +1,4 @@
-# Launch TODO — Rename, AWS, Closed Beta
+# Launch TODO — Rename to LarchBound, AWS, Closed Beta
 
 Goal: take the app public for a closed beta of up to ~20 invited friends, on AWS, for ≤$10/mo in infra cost, with a hard cap on AI spend and a way for beta testers to chip in. Also a resume-building exercise, so we're intentionally touching a handful of real AWS services rather than the single cheapest possible box — see the budget note below for where that tension shows up.
 
@@ -8,25 +8,20 @@ Pricing/free-tier figures below are current as of Oct 2026 research but AWS's Fr
 
 ## 1. Naming + domain
 
-Renaming off "Ridgeline" because the namespace is taken everywhere. New direction: **Larch** (the conifer that goes gold and drops its needles every fall — distinctive, on-theme for a hiking app).
+Renaming off "Ridgeline" because the namespace is taken everywhere. New direction: **Larch** (the conifer that goes gold and drops its needles every fall — distinctive, on-theme for a hiking app). **Decided: LarchBound.**
 
-**Checked via RDAP on 2026-10-07 — all below were AVAILABLE as `.com`:**
-- `larchtrek.com` — leans into trip-planning, probably the strongest fit
-- `larchbound.com` — echoes "outward bound," adventurous
-- `truelarch.com` — pun on "true north," distinctive
-- `golarch.com` — short, app-like
-- `larchpeak.com`
+**Decision — `larchbound.com`:** echoes "outward bound," adventurous, fits a trip-planning app. Checked via RDAP on 2026-10-07 (both when first surveyed and again just before locking it in) — still AVAILABLE. `larch.com` and `larchy.com` were also considered and are both long-held (registered 1996 and 2006 respectively) — not realistic to chase.
 
-**Already taken:** `larchline.com`, `larchpath.com`, `larchridge.com` (all registered 2026, so other people landed on the same idea — re-verify before committing, availability changes).
+Other `.com` options that were confirmed available during the survey, kept here in case `larchbound.com` ever falls through at purchase time: `larchtrek.com`, `truelarch.com`, `golarch.com`, `larchpeak.com`. (`larchline.com`, `larchpath.com`, `larchridge.com` were already taken — all registered in 2026, so other people landed on the same idea.)
 
-No direct collisions found against existing apps/companies for LarchTrek, Larchbound, or GoLarch (a couple unrelated "Larch ___" companies exist — Larch Networks, Larch Agency, Larch Soft — none in the hiking/outdoors space).
+No direct collisions found against existing apps/companies for Larchbound (a couple unrelated "Larch ___" companies exist — Larch Networks, Larch Agency, Larch Soft — none in the hiking/outdoors space).
 
-- [ ] Pick final name from the list above (or a variant) — recommend **LarchTrek**
+- [x] Pick final name — **LarchBound**
 - [ ] Re-check domain availability right before buying (don't trust the above past a day or two)
-- [ ] Register the domain at **Cloudflare** (registrar pricing is at-cost, ~$9–10/yr for `.com`, free WHOIS privacy) rather than Route 53 directly (~$12–14/yr all-in with the hosted zone) — saves a few dollars/year for identical functionality
+- [ ] Register `larchbound.com` at **Cloudflare** (registrar pricing is at-cost, ~$9–10/yr for `.com`, free WHOIS privacy) rather than Route 53 directly (~$12–14/yr all-in with the hosted zone) — saves a few dollars/year for identical functionality
 - [ ] Create a **Route 53 public hosted zone** for the domain regardless of where it's registered ($0.50/mo) — this is what makes AWS (ACM, CloudFront) able to manage DNS for it
 - [ ] At Cloudflare, point the domain's nameservers at the 4 NS records Route 53 gives you for the hosted zone (makes Route 53 authoritative for DNS; Cloudflare stays registrar-of-record only)
-- [ ] Rename the repo/package: `package.json` name, README, `CLAUDE.md` title/references, `ridgeline-auth` localStorage key, Docker image/container names, any hardcoded "Ridgeline" strings in UI copy
+- [ ] Rename the repo/package: `package.json` name → `larchbound`, README, `CLAUDE.md` title/references, `ridgeline-auth` localStorage key → `larchbound-auth`, Docker image/container names, any hardcoded "Ridgeline" strings in UI copy
 - [ ] Decide whether to keep `ridgeline` as the GitHub repo name (cosmetic, low priority) or rename the repo too
 
 ---
@@ -110,7 +105,7 @@ Three endpoints currently call Claude and cost real money per request: `journal-
 ## 6. Payments: Venmo + supporter tracking
 
 - [ ] Add `isSupporter: boolean` to `UserProfile`
-- [ ] Add a small "Support Larch[Trek]" section to `AccountDialog` with your Venmo link/QR and a one-line explainer
+- [ ] Add a small "Support LarchBound" section to `AccountDialog` with your Venmo link/QR and a one-line explainer
 - [ ] No admin route for v1 — toggle `isSupporter` directly in the Atlas web UI when someone sends money. Twenty users is small enough that an admin UI would be pure overhead; revisit if the beta grows past casual manual tracking
 - [ ] Frontend: small supporter badge next to name/avatar (e.g. in `IconRail` or `AccountDialog`) when `isSupporter` is true
 
