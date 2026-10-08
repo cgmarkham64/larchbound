@@ -2,6 +2,10 @@
 
 ---
 
+See `TODO-launch.md` for the rename + AWS + closed-beta rollout plan (separate initiative from the feature work below).
+
+---
+
 ## Active Work
 
 ### Trips + Plan Wizard Unification
