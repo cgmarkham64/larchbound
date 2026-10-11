@@ -1,0 +1,20 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadLarchboundProdParams",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:GetParameter",
+        "ssm:GetParameters"
+      ],
+      "Resource": "arn:aws:ssm:us-east-1:<ACCOUNT_ID>:parameter/larchbound/prod/*"
+    },
+    {
+      "Sid": "DecryptSsmDefaultKey",
+      "Effect": "Allow",
+      "Action": "kms:Decrypt",
+      "Resource": "arn:aws:kms:us-east-1:<ACCOUNT_ID>:alias/aws/ssm"
+    }
+  ]
+}
