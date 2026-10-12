@@ -147,14 +147,14 @@ server/
                   #   Trip.ts (+ ownerSub, sharedWith[], status, planStages: Mixed), Loadout.ts (+ ownerSub),
                   #   GearItem.ts (+ ownerSub), JournalDay.ts (+ wildlife[], companions[]),
                   #   Notification.ts (toSub, fromSub, fromName, type, tripId, tripTitle, read, status),
-                  #   Plan.ts (superseded — plan data now lives in Trip.planStages; route kept for migration)
+                  #   AiUsage.ts (sub, yearMonth, count, tripId? — per-user rows + a GLOBAL_USAGE_SUB sentinel row for the global monthly ceiling)
     routes/       # auth.ts (register + login local-dev only; GET /me, PUT/DELETE /me/avatar, PUT /me/preferences),
-                  #   trips.ts (+ POST /:id/permits/suggest, POST /:id/permits/lookup),
+                  #   trips.ts (+ POST /:id/permits/suggest, POST /:id/permits/lookup, POST /:id/permits/zone-product),
                   #   loadouts.ts, gearItems.ts, journalDays.ts, journalScan.ts,
                   #   users.ts (GET /search?q=), notifications.ts (GET, POST accept/decline, DELETE, PATCH read-all),
-                  #   plans.ts (superseded by trips.ts; kept until migration verified)
+                  #   food.ts (POST /macros — AI-assisted macro lookup), aiUsage.ts (GET / — per-user quota summary)
     index.ts      # Express app, MongoDB connect; /api/auth public, all other routes behind requireAuth
-  .env            # PORT=8000, MONGODB_URI, ANTHROPIC_API_KEY, JWT_SECRET, CORS_ORIGIN
+  .env            # PORT=8000, MONGODB_URI, ANTHROPIC_API_KEY, JWT_SECRET, CORS_ORIGIN, AI_FEATURES_ENABLED
   .env.example    # committed template — copy to .env and fill in secrets
   Dockerfile      # multi-stage: tsc build → node:22-alpine runtime
 ```
@@ -192,6 +192,7 @@ docker compose.yml  # Four services on larchbound-net:
 | DELETE         | `/api/trips/:id/share/:sub` | Remove a collaborator (owner only); also cancels any pending invite notification for that user. |
 | POST           | `/api/trips/:id/permits/suggest` | AI-powered permit resource scan — returns `{ links: PermitLink[] }` (url, title, description, tier) for the trip's route area. |
 | POST           | `/api/trips/:id/permits/lookup`  | AI permit lookup by name — returns pre-filled permit fields (type, name, agency, url, criticalDates, confidence, verificationNote). |
+| POST           | `/api/trips/:id/permits/zone-product` | AI pick of the correct recgov product for a detected zone-stay permit need. |
 
 **Journal days (all require JWT; read gated by trip access, writes owner-only)**
 | Method         | Path                        | Description                                           |
@@ -221,11 +222,15 @@ docker compose.yml  # Four services on larchbound-net:
 | DELETE | `/api/notifications/:id`        | Dismiss (delete) a notification                                                                                |
 | PATCH  | `/api/notifications/read-all`   | Mark all non-pending notifications as read (called on panel open)                                              |
 
-**Plans — superseded; plan data now lives in `Trip.planStages` via `/api/trips`**
-| Method         | Path             | Description                                                                                               |
-|----------------|------------------|-----------------------------------------------------------------------------------------------------------|
-| GET/POST       | `/api/plans`     | *(deprecated)* List / create plans — kept live until migration verified; frontend now uses `/api/trips`.  |
-| GET/PUT/DELETE | `/api/plans/:id` | *(deprecated)* Read / update / delete. 400 on invalid ObjectId, 403 if not owner.                        |
+**Food (all require JWT)**
+| Method | Path               | Description                                                                                    |
+|--------|--------------------|--------------------------------------------------------------------------------------------------|
+| POST   | `/api/food/macros` | AI-assisted nutrition lookup by food name — returns candidate `MacroResult[]` (kcal, protein, fat, carbs, weight, note) from USDA FDC, with Claude normalizing the query first. |
+
+**AI usage (all require JWT)**
+| Method | Path            | Description                                                                                      |
+|--------|-----------------|----------------------------------------------------------------------------------------------------|
+| GET    | `/api/ai-usage` | Current user's AI quota summary for the month — `{ used, limit, remaining, yearMonth }`. Backs the `AiQuotaBadge` shown near each AI-assisted action. |
 
 **Other**
 | Method | Path                | Description                                                                                                                   |

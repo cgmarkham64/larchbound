@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { lookupMacros } from '../../../../lib/food'
 import type { MacroResult } from '../../../../lib/food'
 import type { MealItem, MealSlot, PlanMealEntry } from '../../types'
 import { blankItem } from './dayMealDialog.helpers'
+import { extractApiError } from '../../../../lib/utils'
 
 type MealRow = PlanMealEntry
 
@@ -38,9 +40,15 @@ export function useMealSlotsState(day: MealRow, onSave: (updated: MealRow) => vo
 export function useNutritionLookup(updateItem: (slot: MealSlot, id: string, patch: Partial<MealItem>) => void) {
   const [loading, setLoading] = useState<Set<string>>(new Set())
   const [pendingCandidates, setPendingCandidates] = useState<Record<string, MacroResult[]>>({})
+  const [lookupErrors, setLookupErrors] = useState<Record<string, string>>({})
+  const qc = useQueryClient()
 
   function dismissCandidates(id: string) {
     setPendingCandidates(prev => { const next = { ...prev }; delete next[id]; return next })
+  }
+
+  function dismissLookupError(id: string) {
+    setLookupErrors(prev => { const next = { ...prev }; delete next[id]; return next })
   }
 
   function selectCandidate(slot: MealSlot, id: string, c: MacroResult) {
@@ -50,17 +58,19 @@ export function useNutritionLookup(updateItem: (slot: MealSlot, id: string, patc
 
   async function lookupItem(id: string, name: string) {
     setLoading(prev => new Set(prev).add(id))
+    dismissLookupError(id)
     try {
       const candidates = await lookupMacros(name)
       setPendingCandidates(prev => ({ ...prev, [id]: candidates }))
-    } catch {
-      // leave unchanged on error
+      qc.invalidateQueries({ queryKey: ['ai-usage'] })
+    } catch (err) {
+      setLookupErrors(prev => ({ ...prev, [id]: extractApiError(err) ?? 'Macro lookup failed' }))
     } finally {
       setLoading(prev => { const s = new Set(prev); s.delete(id); return s })
     }
   }
 
-  return { loading, pendingCandidates, selectCandidate, dismissCandidates, lookupItem }
+  return { loading, pendingCandidates, lookupErrors, selectCandidate, dismissCandidates, dismissLookupError, lookupItem }
 }
 
 export function useCopyToDays(onCopyTo: (targetIndices: number[]) => void) {

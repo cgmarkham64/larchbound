@@ -9,6 +9,7 @@ type MealSlotsListProps = {
   loading: Set<string>
   weightUnit: WeightUnit
   pendingCandidates: Record<string, MacroResult[]>
+  lookupErrors: Record<string, string>
   onAdd: (slot: MealSlot) => void
   onUpdate: (slot: MealSlot, id: string, patch: Partial<MealItem>) => void
   onRemove: (slot: MealSlot, id: string) => void
@@ -18,7 +19,7 @@ type MealSlotsListProps = {
 }
 
 export function MealSlotsList({
-  slots, loading, weightUnit, pendingCandidates, onAdd, onUpdate, onRemove, onLookup, onSelectCandidate, onDismissCandidates,
+  slots, loading, weightUnit, pendingCandidates, lookupErrors, onAdd, onUpdate, onRemove, onLookup, onSelectCandidate, onDismissCandidates,
 }: MealSlotsListProps) {
   return (
     <div className="overflow-y-auto p-5 flex flex-col gap-5">
@@ -30,6 +31,7 @@ export function MealSlotsList({
           loading={loading}
           weightUnit={weightUnit}
           pendingCandidates={pendingCandidates}
+          lookupErrors={lookupErrors}
           onAdd={() => onAdd(slot)}
           onUpdate={(id, patch) => onUpdate(slot, id, patch)}
           onRemove={id => onRemove(slot, id)}

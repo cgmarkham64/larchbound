@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { UseFormSetValue, UseFormHandleSubmit, UseFormGetValues } from 'react-hook-form'
 import type { Trip, JournalDay } from '../../types'
 import { useSaveJournalDay } from '../../hooks/useJournalDays'
@@ -83,6 +84,7 @@ export function useFormAutoSave(
 export function useJournalScan(sys: 'imperial' | 'metric', setValue: UseFormSetValue<FormValues>) {
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
+  const qc = useQueryClient()
 
   async function handleScanFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -98,6 +100,7 @@ export function useJournalScan(sys: 'imperial' | 'metric', setValue: UseFormSetV
         imageBase64: base64,
         mediaType: file.type,
       })
+      qc.invalidateQueries({ queryKey: ['ai-usage'] })
 
       applyScannedFields(data, sys, setValue)
 

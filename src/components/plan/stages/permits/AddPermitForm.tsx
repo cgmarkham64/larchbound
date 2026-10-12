@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { IconSearch, IconPlus } from '../../../icons'
+import { AiQuotaBadge } from '../../AiQuotaBadge'
 
 type AddPermitFormProps = {
   onSearch: (name: string) => void
@@ -19,7 +20,10 @@ export function AddPermitForm({ onSearch, lookupLoading, lookupError, canLookup,
 
   return (
     <section className="pt-1">
-      <div className="font-mono text-label tracking-[0.16em] uppercase text-text-dim mb-2.5">Add a permit</div>
+      <div className="flex items-center justify-between gap-2 mb-2.5">
+        <div className="font-mono text-label tracking-[0.16em] uppercase text-text-dim">Add a permit</div>
+        <AiQuotaBadge />
+      </div>
       <form onSubmit={handleSubmit} className="flex gap-2.5 p-1 bg-surface border border-border rounded-lg">
         <div className="flex-1 flex items-center gap-2 px-3 text-text-dim">
           {lookupLoading

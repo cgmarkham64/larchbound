@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import type { UseFormRegister } from 'react-hook-form'
 import type { FormValues } from './journalEntryForm.types'
+import { AiQuotaBadge } from '../plan/AiQuotaBadge'
 
 type JournalEntryHeaderProps = {
   register: UseFormRegister<FormValues>
@@ -39,6 +40,7 @@ export function JournalEntryHeader({ register, dayNumber, scanning, scanError, o
         >
           {scanning ? 'Scanning…' : '⊕ Scan page'}
         </button>
+        <AiQuotaBadge />
       </div>
 
       {scanError && <p className="text-fine text-red mb-3">{scanError}</p>}

@@ -11,6 +11,7 @@ type ItemRowProps = {
   isLoading: boolean
   weightUnit: WeightUnit
   candidates: MacroResult[]
+  lookupError?: string
   onUpdate: (patch: Partial<MealItem>) => void
   onRemove: () => void
   onLookup: (name: string) => void
@@ -36,7 +37,7 @@ function LookupButton({ item, isLoading, onLookup }: { item: MealItem; isLoading
   )
 }
 
-export function ItemRow({ item, isLoading, weightUnit, candidates, onUpdate, onRemove, onLookup, onSelectCandidate, onDismissCandidates }: ItemRowProps) {
+export function ItemRow({ item, isLoading, weightUnit, candidates, lookupError, onUpdate, onRemove, onLookup, onSelectCandidate, onDismissCandidates }: ItemRowProps) {
   return (
     <div className="bg-surface-2 border border-border rounded-lg p-2.5 flex flex-col gap-2">
       <div className="flex items-center gap-1.5">
@@ -55,7 +56,12 @@ export function ItemRow({ item, isLoading, weightUnit, candidates, onUpdate, onR
       <NutritionCandidates candidates={candidates} weightUnit={weightUnit} onSelect={onSelectCandidate} onDismiss={onDismissCandidates} />
       <ItemMacroFields item={item} weightUnit={weightUnit} onUpdate={onUpdate} />
 
-      {item.lookupNote && (
+      {lookupError && (
+        <p className="font-mono text-label text-red truncate" title={lookupError}>
+          ⚠ {lookupError}
+        </p>
+      )}
+      {!lookupError && item.lookupNote && (
         <p className="font-mono text-label text-text-dim truncate" title={item.lookupNote}>
           ↳ {item.lookupNote}
         </p>

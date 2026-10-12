@@ -44,7 +44,7 @@ The main thing that would have threatened the $10/mo ceiling was **AWS's public 
 | **Total** | **~$7–7.50/mo** | real margin under $10, not just a bare fit |
 
 - [ ] Re-run this through the AWS Pricing Calculator before committing, with your actual region
-- [ ] Set an **AWS Budgets** alert at $8 and $10 (free to configure) — covers AWS infra spend only, **not** the Anthropic API bill (see §5)
+- [x] Set an **AWS Budgets** alert at $8 and $10 (free to configure) — covers AWS infra spend only, **not** the Anthropic API bill (see §5) — done 2026-10-11
 
 ---
 
@@ -93,13 +93,13 @@ Atlas is wire-compatible with self-hosted MongoDB, so this is mostly a connectio
 
 ## 5. AI usage caps (new work)
 
-Three endpoints currently call Claude and cost real money per request: `journal-scan`, `trips/:id/permits/suggest`, `trips/:id/permits/lookup`. Need two independent layers, because AWS Budgets (§2) only watches AWS spend — it has no visibility into the Anthropic bill at all.
+Five endpoints call Claude and cost real money per request: `journal-scan`, `trips/:id/permits/suggest`, `trips/:id/permits/lookup`, `trips/:id/permits/zone-product`, `food/macros` (the last two weren't in the original three-endpoint estimate — found during implementation). Two independent layers, because AWS Budgets (§2) only watches AWS spend — it has no visibility into the Anthropic bill at all.
 
-- [ ] **Anthropic Console backstop**: set a hard monthly spend limit on the workspace/API key directly in the Anthropic Console. This is the last line of defense if the app-level logic has a bug.
-- [ ] **Per-user monthly quota**: new `AiUsage` collection (`{ sub, yearMonth, count }`), incremented atomically on each successful AI call, checked before calling Claude in all three routes; return 429 with a clear "AI quota reached for this month" message once a user hits their cap (pick a number — e.g. 20 calls/user/month — small enough to bound cost, generous enough not to annoy 20 friends)
-- [ ] **Global monthly ceiling**: a second counter (estimated cost, or just raw call count across all users) with its own hard cap that disables all three AI endpoints app-wide once hit, independent of any single user's quota — protects against the aggregate even if every individual stays under their personal quota
-- [ ] **Kill switch**: a flag in SSM Parameter Store (e.g. `ai-features-enabled`) checked at request time, so AI features can be disabled instantly without a redeploy if something runs away
-- [ ] Surface remaining quota somewhere in the UI (even just a tooltip) so testers understand why a request might get rejected near month-end
+- [x] **Anthropic Console backstop**: hard $20/mo spend limit set on the workspace directly in the Anthropic Console — done 2026-10-11.
+- [x] **Per-user monthly quota**: `AiUsage` collection (`{ sub, yearMonth, count }`, compound unique index), checked via `requireAiQuota()` before calling Claude and incremented via `recordAiUsage()` only after a successful call, across all five routes — done 2026-10-12. 20 calls/user/month; 429 with a clear message once hit.
+- [x] **Global monthly ceiling**: same `AiUsage` collection, sentinel row (`sub: '__global__'`) per month, same atomic increment — done 2026-10-12. 200 calls/month across all users, independent of any single user's quota, distinct 429 message.
+- [x] **Kill switch**: `AI_FEATURES_ENABLED` env var (static, default-on), flows through SSM → `deploy/fetch-env.sh` → `server/.env` same as the other secrets — done 2026-10-12. Checked at request time; returns 503 without touching counters. (Not live SSM polling — a redeploy/restart to flip it was an intentional simplicity tradeoff for a 20-user beta.)
+- [x] Remaining quota surfaced in the UI via a shared `AiQuotaBadge` component (Permits scan/lookup, Journal scan, Food macro lookup) — done 2026-10-12. Backed by `GET /api/ai-usage`.
 
 ---
 
@@ -134,11 +134,11 @@ Roughly the order that avoids backtracking:
 3. ✅ Atlas M0 cluster + migrate/point `MONGODB_URI`
 4. ✅ Lightsail instance up, Docker Compose (API only) running, reachable by raw IP first
 5. ✅ Fresh prod `JWT_SECRET` + `MONGODB_URI` + `CORS_ORIGIN` + `ORIGIN_VERIFY_SECRET` in SSM, firewall open to Anywhere + origin-verify header check (not the originally planned managed-prefix-list restriction — Lightsail doesn't support that, see §3)
-6. **AI usage caps + kill switch — next up.** Must ship and be tested *before* this goes anywhere near "friends can see this"
+6. ✅ AI usage caps + kill switch — implemented and verified (quota logic + 429s + kill switch tested against local DB/server, zero real Claude calls spent beyond one incidental macro lookup during verification) 2026-10-12. Still needs the one-time prod SSM param + `fetch-env.sh` re-run before deploy (see §5 kill switch note).
 7. ✅ ACM cert + CloudFront (frontend + API behaviors) + Route 53 ALIAS records
 8. Anthropic API secrets configuration in cloud
 9. GitHub CI/CD pipeline configuration
-10. AWS Budgets alert + Anthropic Console spend limit, both confirmed active
+10. ✅ AWS Budgets alert + Anthropic Console spend limit, both confirmed active
 11. Add hard cap to number of beta users. I don't want more than 20 for this first round
 12. Make branding match. There's still "RIDGELINE" references all over this thing
 13. Adjust theme to be more LarchBound (Green and Gold leaves, blue and white snow capped mountains, etc.)

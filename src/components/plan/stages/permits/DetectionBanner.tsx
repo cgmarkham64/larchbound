@@ -1,5 +1,6 @@
 import { IconMap, IconCheck, IconAlertTriangle } from '../../../icons'
 import { computeBannerHeading } from './permitsListView.helpers'
+import { AiQuotaBadge } from '../../AiQuotaBadge'
 
 type DetectionBannerProps = {
   scanning: boolean
@@ -59,6 +60,7 @@ function BannerActions({ canEdit, scanning, permitFree, showConfirmFree, onResca
       >
         Re-scan
       </button>
+      <AiQuotaBadge />
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction } from 'react'
 import type { Trip } from '../../../../types'
 import { suggestPermits, lookupPermit, pickZoneProduct } from '../../../../lib/permits'
@@ -90,13 +91,15 @@ async function performScan(
   setLinks: Dispatch<SetStateAction<PermitLink[]>>,
   setLastScanned: Dispatch<SetStateAction<string | undefined>>,
   setScanError: Dispatch<SetStateAction<string | null>>,
-): Promise<void> {
+): Promise<boolean> {
   try {
     const { links: found } = await suggestPermits(tripId)
     setLinks(found)
     setLastScanned(new Date().toISOString())
+    return true
   } catch (err) {
     setScanError(extractApiError(err) ?? 'Scan failed')
+    return false
   }
 }
 
@@ -108,12 +111,14 @@ export function useScan(
 ) {
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
+  const qc = useQueryClient()
 
   async function runScan() {
     if (!trip?._id || scanning) return
     setScanning(true)
     setScanError(null)
-    await performScan(trip._id, setLinks, setLastScanned, setScanError)
+    const succeeded = await performScan(trip._id, setLinks, setLastScanned, setScanError)
+    if (succeeded) qc.invalidateQueries({ queryKey: ['ai-usage'] })
     setScanning(false)
   }
 
@@ -199,6 +204,7 @@ type ZoneDetectionCtx = {
   setZoneDetecting: Dispatch<SetStateAction<boolean>>
   setZoneDetectError: Dispatch<SetStateAction<string | null>>
   zoneDetectingRef: { current: boolean }
+  invalidateAiUsage: () => void
 }
 
 function resolvableZoneContext(
@@ -217,8 +223,7 @@ function resolvableZoneContext(
 // recgov product + copy. `force` lets the manual "Re-detect" button retry even when
 // the signature hasn't changed (e.g. after a transient AI failure).
 async function performZoneDetection(ctx: ZoneDetectionCtx, force: boolean): Promise<void> {
-  const { trip, routeSegments, permits, partySize, zoneDetectedSignature } = ctx
-  const { setPermits, setZoneDetectedSignature, setZoneDetectedAt, setZoneDetecting, setZoneDetectError, zoneDetectingRef } = ctx
+  const { trip, routeSegments, permits, partySize, zoneDetectedSignature, setPermits, setZoneDetectedSignature, setZoneDetectedAt, setZoneDetecting, setZoneDetectError, zoneDetectingRef, invalidateAiUsage } = ctx
   const resolved = resolvableZoneContext(trip, routeSegments, zoneDetectingRef.current)
   if (!resolved) return
   const { tripId, startDate, segments: routeSegs } = resolved
@@ -236,6 +241,7 @@ async function performZoneDetection(ctx: ZoneDetectionCtx, force: boolean): Prom
 
     const { toAdd, toAddSelfReg } = reconcileZoneNeeds(needs, selfRegister, permits, currentNeedIds)
     const { detected, failures } = await buildDetectedPermits(tripId, toAdd, toAddSelfReg, partySize)
+    if (toAdd.length > 0) invalidateAiUsage()
     if (detected.length > 0) {
       setPermits(prev => [...prev, ...detected.filter(d => !prev.some(p => p.id === d.id))])
     }
@@ -263,11 +269,13 @@ export function useZoneDetection(
   const [zoneDetecting, setZoneDetecting] = useState(false)
   const [zoneDetectError, setZoneDetectError] = useState<string | null>(null)
   const zoneDetectingRef = useRef(false)
+  const qc = useQueryClient()
 
   function runZoneDetection(force = false) {
     return performZoneDetection({
       trip, routeSegments, permits, partySize, zoneDetectedSignature,
       setPermits, setZoneDetectedSignature, setZoneDetectedAt, setZoneDetecting, setZoneDetectError, zoneDetectingRef,
+      invalidateAiUsage: () => qc.invalidateQueries({ queryKey: ['ai-usage'] }),
     }, force)
   }
 
@@ -349,6 +357,7 @@ export function usePermitLookup(
 ) {
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lookupError, setLookupError] = useState<string | null>(null)
+  const qc = useQueryClient()
 
   async function handleSearch(permitName: string) {
     if (!trip?._id || lookupLoading) return
@@ -356,6 +365,7 @@ export function usePermitLookup(
     setLookupError(null)
     try {
       const result = await lookupPermit(trip._id, permitName, links)
+      qc.invalidateQueries({ queryKey: ['ai-usage'] })
       setEditingPermit(buildPrefilledPermit(result, partySize))
       setAiPrefill({ confidence: result.confidence, verificationNote: result.verificationNote })
       setFreeformOpen(true)

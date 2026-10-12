@@ -8,6 +8,7 @@ import { normalizeShared, canRead, populateTripUsers, fetchTripForRead, partySiz
 import { suggestPermits, lookupPermit, pickZoneProduct } from '../services/permitService'
 import type { PermitLink, ZoneProductInput } from '../services/permitService'
 import { validObjectId } from '../utils/objectId'
+import { requireAiQuota, recordAiUsage } from '../services/aiUsageService'
 
 const router = Router()
 
@@ -146,6 +147,8 @@ router.delete('/:id', asyncRoute(async (req, res) => {
 // ─── Permit suggestion ────────────────────────────────────────────────────────
 
 router.post('/:id/permits/suggest', asyncRoute(async (req, res) => {
+  await requireAiQuota(req.user.sub)
+
   const trip = await fetchTripForRead(req.params.id as string, req.user.sub)
   const partySize = partySizeFor(trip)
 
@@ -160,10 +163,13 @@ router.post('/:id/permits/suggest', asyncRoute(async (req, res) => {
     gpxCoords: gpxPlanned?.coordinates,
   })
 
+  await recordAiUsage(req.user.sub, req.params.id as string)
   res.json(result)
 }))
 
 router.post('/:id/permits/lookup', asyncRoute(async (req, res) => {
+  await requireAiQuota(req.user.sub)
+
   const trip = await fetchTripForRead(req.params.id as string, req.user.sub)
 
   const { permitName, links = [] } = req.body as { permitName?: string; links?: PermitLink[] }
@@ -178,10 +184,13 @@ router.post('/:id/permits/lookup', asyncRoute(async (req, res) => {
     partySize,
   }, links)
 
+  await recordAiUsage(req.user.sub, req.params.id as string)
   res.json(result)
 }))
 
 router.post('/:id/permits/zone-product', asyncRoute(async (req, res) => {
+  await requireAiQuota(req.user.sub)
+
   const trip = await fetchTripForRead(req.params.id as string, req.user.sub)
 
   const input = req.body as ZoneProductInput
@@ -189,6 +198,7 @@ router.post('/:id/permits/zone-product', asyncRoute(async (req, res) => {
   const partySize = partySizeFor(trip)
 
   const result = await pickZoneProduct(input, partySize)
+  await recordAiUsage(req.user.sub, req.params.id as string)
   res.json(result)
 }))
 

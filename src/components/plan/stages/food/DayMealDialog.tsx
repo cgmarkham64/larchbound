@@ -23,7 +23,7 @@ type DayMealDialogProps = {
 export function DayMealDialog({ day, dayIndex, totalDays, onSave, onCopyTo, onClose }: DayMealDialogProps) {
   const [weightUnit, setWeightUnit] = useState<WeightUnit>('oz')
   const { slots, addItem, updateItem, removeItem } = useMealSlotsState(day, onSave)
-  const { loading, pendingCandidates, selectCandidate, dismissCandidates, lookupItem } = useNutritionLookup(updateItem)
+  const { loading, pendingCandidates, lookupErrors, selectCandidate, dismissCandidates, lookupItem } = useNutritionLookup(updateItem)
   const copy = useCopyToDays(onCopyTo)
 
   const allItems = SLOTS.flatMap(s => slots[s])
@@ -37,6 +37,7 @@ export function DayMealDialog({ day, dayIndex, totalDays, onSave, onCopyTo, onCl
         loading={loading}
         weightUnit={weightUnit}
         pendingCandidates={pendingCandidates}
+        lookupErrors={lookupErrors}
         onAdd={addItem}
         onUpdate={updateItem}
         onRemove={removeItem}

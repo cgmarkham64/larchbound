@@ -11,6 +11,7 @@ type SlotSectionProps = {
   loading: Set<string>
   weightUnit: WeightUnit
   pendingCandidates: Record<string, MacroResult[]>
+  lookupErrors: Record<string, string>
   onAdd: () => void
   onUpdate: (id: string, patch: Partial<MealItem>) => void
   onRemove: (id: string) => void
@@ -20,7 +21,7 @@ type SlotSectionProps = {
 }
 
 export function SlotSection({
-  slot, items, loading, weightUnit, pendingCandidates, onAdd, onUpdate, onRemove, onLookup, onSelectCandidate, onDismissCandidates,
+  slot, items, loading, weightUnit, pendingCandidates, lookupErrors, onAdd, onUpdate, onRemove, onLookup, onSelectCandidate, onDismissCandidates,
 }: SlotSectionProps) {
   return (
     <div>
@@ -35,6 +36,7 @@ export function SlotSection({
             isLoading={loading.has(item.id)}
             weightUnit={weightUnit}
             candidates={pendingCandidates[item.id] ?? []}
+            lookupError={lookupErrors[item.id]}
             onUpdate={patch => onUpdate(item.id, patch)}
             onRemove={() => onRemove(item.id)}
             onLookup={name => onLookup(item.id, name)}

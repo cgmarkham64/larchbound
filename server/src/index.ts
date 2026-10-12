@@ -11,8 +11,8 @@ import loadoutsRouter from './routes/loadouts'
 import tripsRouter from './routes/trips'
 import usersRouter from './routes/users'
 import notificationsRouter from './routes/notifications'
-import plansRouter from './routes/plans'
 import foodRouter from './routes/food'
+import aiUsageRouter from './routes/aiUsage'
 import { requireAuth } from './middleware/auth'
 import { requireOriginSecret } from './middleware/originVerify'
 
@@ -42,8 +42,8 @@ app.use('/api/loadouts', requireAuth, loadoutsRouter)
 app.use('/api/trips', requireAuth, tripsRouter)
 app.use('/api/users', requireAuth, usersRouter)
 app.use('/api/notifications', requireAuth, notificationsRouter)
-app.use('/api/plans', requireAuth, plansRouter)
 app.use('/api/food', requireAuth, foodRouter)
+app.use('/api/ai-usage', requireAuth, aiUsageRouter)
 
 app.get('/health', (_req, res) => res.json({ ok: true }))
 

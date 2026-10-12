@@ -1,5 +1,6 @@
 import { IconX } from '../../../icons'
 import type { WeightUnit } from './dayMealDialog.helpers'
+import { AiQuotaBadge } from '../../AiQuotaBadge'
 
 const WEIGHT_UNITS: WeightUnit[] = ['oz', 'g']
 
@@ -18,6 +19,7 @@ export function DayMealDialogHeader({ dayNumber, weightUnit, onWeightUnitChange,
       </span>
       <span className="font-heading text-body-sm font-extrabold text-text">Meal plan</span>
       <div className="ml-auto flex items-center gap-3">
+        <AiQuotaBadge />
         <div className="flex rounded border border-border overflow-hidden">
           {WEIGHT_UNITS.map(u => (
             <button
