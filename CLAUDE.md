@@ -269,6 +269,23 @@ See `TODO.md` for detailed task breakdowns. Feature direction:
 
 Subsequent `docker compose up` calls don't need the realm re-created if the `keycloak-data` volume persists.
 
+### Production (AWS)
+
+`https://larchbound.com` is live (closed beta). No CI/CD yet — all deploys are manual.
+
+| Layer    | Service                          | Notes                                                                                                             |
+|----------|-----------------------------------|---------------------------------------------------------------------------------------------------------------------|
+| Frontend | S3 (private) + CloudFront         | OAC-only bucket access, no public S3 URL; distribution `E3MBP3XVUNPUJX`                                            |
+| API      | Lightsail `larchbound-api` ($7/mo, static IP) | `docker-compose.prod.yml` (API container only — no local mongo/keycloak/nginx)                         |
+| Database | MongoDB Atlas M0 (`larchbound-cluster`, us-east-1) | free tier, 512MB cap                                                                                  |
+| DNS/certs| Route 53 + ACM (us-east-1)        | apex + `www` ALIAS → CloudFront; `api.larchbound.com` A record → Lightsail static IP (CloudFront's origin-domain field rejects a bare IP, needs a hostname) |
+| Secrets  | SSM Parameter Store, `/larchbound/prod/*` | `JWT_SECRET`, `MONGODB_URI`, `CORS_ORIGIN`, `ORIGIN_VERIFY_SECRET` — pulled onto the box by `deploy/fetch-env.sh` |
+
+- **Origin security**: Lightsail firewalls can't reference CloudFront's managed prefix list (that's an EC2/VPC Security Group feature). Port 8000 is open to the internet instead, gated by a shared-secret header: CloudFront attaches `X-Origin-Verify: <secret>` to every request it forwards; `requireOriginSecret` (`server/src/middleware/originVerify.ts`, wired in first in `server/src/index.ts`) 403s anything missing/mismatching it. No-ops when `ORIGIN_VERIFY_SECRET` is unset, so local dev and Docker Compose dev are unaffected.
+- **Frontend deploy**: `deploy/deploy-frontend.sh` (run locally) — builds with `VITE_API_URL=` explicitly empty (axios → relative paths; a bare `npm run build` falls back to the hardcoded `http://localhost:8000` default), syncs `dist/` to S3, invalidates CloudFront.
+- **API deploy**: `rsync -e "ssh -i ~/.ssh/LightsailDefaultKey-us-east-1.pem" server/ docker-compose.prod.yml ubuntu@<lightsail-ip>:~/larchbound/`, then on the box `docker compose -f docker-compose.prod.yml up --build -d`.
+- Full launch plan and remaining pre-beta work (AI usage caps, supporter/Venmo, AWS Budgets) tracked in `TODO-launch.md`.
+
 ### Notes
 - GET /api/loadouts/:id — automatically populates the full GearItem documents so the frontend doesn't need a second request
 - GET /api/trips/:id — populates the full Loadout (but not the loadout's items — you'd need a second populate for that; we can address it when you hook up the frontend)
