@@ -136,6 +136,10 @@ Roughly the order that avoids backtracking:
 5. ✅ Fresh prod `JWT_SECRET` + `MONGODB_URI` + `CORS_ORIGIN` + `ORIGIN_VERIFY_SECRET` in SSM, firewall open to Anywhere + origin-verify header check (not the originally planned managed-prefix-list restriction — Lightsail doesn't support that, see §3)
 6. **AI usage caps + kill switch — next up.** Must ship and be tested *before* this goes anywhere near "friends can see this"
 7. ✅ ACM cert + CloudFront (frontend + API behaviors) + Route 53 ALIAS records
-8. Supporter flag + Venmo link in UI
-9. AWS Budgets alert + Anthropic Console spend limit, both confirmed active
-10. Invite the first couple of friends, watch it for a few days before inviting the rest
+8. Anthropic API secrets configuration in cloud
+9. GitHub CI/CD pipeline configuration
+10. AWS Budgets alert + Anthropic Console spend limit, both confirmed active
+11. Add hard cap to number of beta users. I don't want more than 20 for this first round
+12. Make branding match. There's still "RIDGELINE" references all over this thing
+13. Adjust theme to be more LarchBound (Green and Gold leaves, blue and white snow capped mountains, etc.)
+14. Invite the first couple of friends, watch it for a few days before inviting the rest
