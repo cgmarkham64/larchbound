@@ -14,6 +14,7 @@ import notificationsRouter from './routes/notifications'
 import plansRouter from './routes/plans'
 import foodRouter from './routes/food'
 import { requireAuth } from './middleware/auth'
+import { requireOriginSecret } from './middleware/originVerify'
 
 const DEFAULT_PORT = 8000
 
@@ -21,6 +22,7 @@ const app = express()
 const PORT = process.env.PORT ?? DEFAULT_PORT
 const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/larchbound'
 
+app.use(requireOriginSecret)
 app.use(cors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173' }))
 app.use(express.json({ limit: '10mb' }))
 

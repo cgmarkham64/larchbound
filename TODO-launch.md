@@ -52,25 +52,27 @@ The main thing that would have threatened the $10/mo ceiling was **AWS's public 
 
 **Auth decision: local JWT, not Keycloak, for v1.** Already built (`server/src/routes/localAuth.ts`), zero extra cost, no extra container, no RAM pressure on the instance. Reviewed separately for security fit at this scale (20 invited friends) — bcrypt + rate-limiting + algorithm-pinned verification are solid; the two real residual risks are the bearer token living in `localStorage` (XSS exposure, no `httpOnly` boundary) and no server-side revocation (a leaked token is live until it expires). Both are acceptable tradeoffs for a closed group of people you actually know, not for a genuinely public product. Keycloak remains a documented fast-follow (§7) once there's budget headroom and/or the beta outgrows "people I personally invited."
 
-Compute (Lightsail, $5/mo plan):
-- [ ] Docker Compose on the instance: `larchbound-api` container only — **drop the local `mongodb` container** (→ Atlas) and **drop nginx-serving-frontend** (→ S3/CloudFront)
-- [ ] Set `CORS_ORIGIN` to the real frontend domain (not localhost) in the prod env
-- [ ] Confirm `KEYCLOAK_JWKS_URI` / `KEYCLOAK_ISSUER` stay **unset** in prod so `verifyToken()` takes the local HS256 path (per `server/src/middleware/auth.ts`)
+Compute (Lightsail, $7/mo plan):
+- [x] Docker Compose on the instance: `larchbound-api` container only — **drop the local `mongodb` container** (→ Atlas) and **drop nginx-serving-frontend** (→ S3/CloudFront) — done 2026-10-09
+- [x] Set `CORS_ORIGIN` to the real frontend domain (not localhost) in the prod env — done, served from SSM via `deploy/fetch-env.sh`
+- [x] Confirm `KEYCLOAK_JWKS_URI` / `KEYCLOAK_ISSUER` stay **unset** in prod so `verifyToken()` takes the local HS256 path (per `server/src/middleware/auth.ts`) — confirmed, box never sets these
 
-Frontend + edge:
-- [ ] Vite build → private S3 bucket, served via **CloudFront** with Origin Access Control (no public S3 URL)
-- [ ] CloudFront behaviors: default → S3 (frontend), `/api/*` → Lightsail static IP as a custom HTTP origin (mirrors what `nginx.conf` already does today, just moved to the edge)
-- [ ] Lock the Lightsail firewall down to only accept inbound on the API port from CloudFront's managed prefix list (plus SSH from your own IP) — the origin should never be reachable directly over plain HTTP from the open internet, since that's the one path where a bearer token could ever travel in cleartext
-- [ ] Request an **ACM certificate** (us-east-1, free) for the apex + `www`, DNS-validated via the Route 53 hosted zone
-- [ ] Route 53 ALIAS records: apex + `www` → frontend CloudFront distribution
+Frontend + edge — done 2026-10-11/12, confirmed working end-to-end (register succeeded through the full CloudFront → Lightsail path):
+- [x] Vite build → private S3 bucket (`larchbound-frontend-<account-id>-us-east-1-an`), served via **CloudFront** (`E3MBP3XVUNPUJX`) with Origin Access Control (no public S3 URL)
+- [x] CloudFront behaviors: default → S3 (frontend), `/api/*` → `api.larchbound.com:8000` (Route 53 A record → Lightsail static IP; CloudFront's origin-domain field rejected a bare IP, needed a hostname) as a custom HTTP origin
+- [x] **Plan deviation**: Lightsail's firewall does **not** support referencing CloudFront's managed prefix list (that's an EC2/VPC Security Group feature, not available on Lightsail) — discovered when CloudFront got a 504 against the IP-restricted firewall rule. Real fix shipped instead: port 8000 open to Anywhere, but CloudFront attaches a custom header (`X-Origin-Verify: <secret>`) on every forwarded request, and `server/src/middleware/originVerify.ts` (wired in as the first middleware in `server/src/index.ts`) rejects any request missing/mismatching it with 403. Secret lives in SSM as `/larchbound/prod/ORIGIN_VERIFY_SECRET`, pulled by `deploy/fetch-env.sh` same as the other three. No-ops (passes through) when the env var is unset, so local dev/Docker Compose dev are unaffected.
+- [x] Request an **ACM certificate** (us-east-1, free) for the apex + `www`, DNS-validated via the Route 53 hosted zone — issued; note ACM's "Create records in Route 53" button has to actually be clicked per-domain, it doesn't happen automatically on request
+- [x] Route 53 ALIAS records: apex + `www` → frontend CloudFront distribution
+- [x] Custom error responses (403 + 404 → `/index.html`, 200) so TanStack Router's client-side routes survive a page refresh
+- [x] `deploy/deploy-frontend.sh` builds with `VITE_API_URL=` explicitly empty (axios → relative paths, same as the Docker build arg), syncs `dist/` to S3, invalidates CloudFront
 
 Identity/access (do this first, before anything else):
 - [x] Create a non-root **IAM user** for yourself with MFA enabled; stop using the root account day-to-day (root stays only for billing/account-level actions) — done 2026-10-08, root + IAM user both have MFA, signed in as the IAM user going forward
 - [ ] Give that user a scoped policy (Lightsail, S3, CloudFront, Route 53, ACM, Budgets, SSM) rather than `AdministratorAccess` once you know what you're actually touching — currently on `AdministratorAccess` while still discovering the service list; revisit once the build-out stabilizes
 
 Secrets + config:
-- [ ] Store `JWT_SECRET`, Atlas connection string, Anthropic API key in **SSM Parameter Store** (standard tier is free) — not Secrets Manager, which bills per secret per month
-- [ ] Generate a fresh high-entropy `JWT_SECRET` for prod (don't reuse a local dev value) — this single secret can forge tokens for any user if it ever leaks, so treat it like one
+- [x] Store `JWT_SECRET`, Atlas connection string, `CORS_ORIGIN`, and `ORIGIN_VERIFY_SECRET` in **SSM Parameter Store** under `/larchbound/prod/` — done 2026-10-11, read by a dedicated scoped IAM user (`larchbound-api-ssm-reader`) via `deploy/fetch-env.sh`. Anthropic API key not yet added (waiting on §5).
+- [x] Generate a fresh high-entropy `JWT_SECRET` for prod (don't reuse a local dev value) — this single secret can forge tokens for any user if it ever leaks, so treat it like one
 - [x] `.env` / `.env.*` are now gitignored (`.env.example` stays tracked) — confirm `server/.env` was never previously committed in history if you want to be thorough
 
 ---
@@ -127,13 +129,13 @@ Not part of v1 — local JWT covers the threat model for a closed beta of invite
 
 Roughly the order that avoids backtracking:
 
-1. IAM user + MFA, stop using root
-2. Domain registration + Route 53 hosted zone + nameserver delegation
-3. Atlas M0 cluster + migrate/point `MONGODB_URI`
-4. Lightsail instance up, Docker Compose (API only) running, reachable by raw IP first
-5. Fresh prod `JWT_SECRET` in SSM, `CORS_ORIGIN` set, firewall locked to CloudFront's prefix list
-6. AI usage caps + kill switch shipped and tested *before* this goes anywhere near "friends can see this"
-7. ACM cert + CloudFront (frontend + API behaviors) + Route 53 ALIAS records
+1. ✅ IAM user + MFA, stop using root
+2. ✅ Domain registration + Route 53 hosted zone + nameserver delegation
+3. ✅ Atlas M0 cluster + migrate/point `MONGODB_URI`
+4. ✅ Lightsail instance up, Docker Compose (API only) running, reachable by raw IP first
+5. ✅ Fresh prod `JWT_SECRET` + `MONGODB_URI` + `CORS_ORIGIN` + `ORIGIN_VERIFY_SECRET` in SSM, firewall open to Anywhere + origin-verify header check (not the originally planned managed-prefix-list restriction — Lightsail doesn't support that, see §3)
+6. **AI usage caps + kill switch — next up.** Must ship and be tested *before* this goes anywhere near "friends can see this"
+7. ✅ ACM cert + CloudFront (frontend + API behaviors) + Route 53 ALIAS records
 8. Supporter flag + Venmo link in UI
 9. AWS Budgets alert + Anthropic Console spend limit, both confirmed active
 10. Invite the first couple of friends, watch it for a few days before inviting the rest
