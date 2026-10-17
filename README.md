@@ -168,3 +168,72 @@ larchbound/
 | DELETE | `/api/notifications/:id` | Dismiss a notification |
 | PATCH | `/api/notifications/read-all` | Mark all non-pending notifications as read |
 | POST | `/api/journal-scan` | AI scan of a journal image → structured JSON (title, body, mileage, elevation, temps, weather) |
+---
+
+## Production Secrets & Key Rotation
+
+Production config lives in **AWS SSM Parameter Store** (us-east-1) under `/larchbound/prod/`. Nothing secret is committed to this repo. `deploy/fetch-env.sh` runs on the Lightsail box, reads every parameter with the scoped `larchbound-api-ssm-reader` IAM user, and regenerates `server/.env` (mode `600`). The API container picks up `server/.env` via `env_file` in `docker-compose.prod.yml`.
+
+| Parameter | Type | Rotated where |
+|---|---|---|
+| `JWT_SECRET` | SecureString | Self-generated |
+| `MONGODB_URI` | SecureString | MongoDB Atlas → Database Access |
+| `CORS_ORIGIN` | SecureString | — (config, not a secret) |
+| `ORIGIN_VERIFY_SECRET` | SecureString | Self-generated; must match the CloudFront origin custom header |
+| `AI_FEATURES_ENABLED` | String | — (kill switch: `true` / `false`) |
+| `ANTHROPIC_API_KEY` | SecureString | Anthropic Console → `larchbound-prod` workspace → API Keys |
+| `USDA_FDC_API_KEY` | SecureString | api.data.gov/signup |
+
+`fetch-env.sh` stops on the first missing parameter, so a new parameter must exist in SSM before you add it to the script.
+
+### General rotation procedure
+
+1. **Issue the new credential** at its source (see table). Leave the old one active.
+2. **Write it to SSM from your laptop.** Use `read -rs` so the value stays out of your shell history and off the screen:
+   ```bash
+   read -rs NEW_VALUE   # paste, press Enter (nothing echoes)
+   aws ssm put-parameter --name /larchbound/prod/<PARAM_NAME> \
+     --type SecureString --value "$NEW_VALUE" --overwrite --region us-east-1
+   unset NEW_VALUE
+   ```
+   SSM keeps the previous value as an older version (`aws ssm get-parameter-history`).
+3. **Reload on the box:**
+   ```bash
+   ssh -i ~/.ssh/<lightsail-key>.pem ubuntu@<lightsail-ip>
+   bash ~/larchbound/deploy/fetch-env.sh
+   docker compose -f ~/larchbound/docker-compose.prod.yml up -d --force-recreate
+   ```
+4. **Verify** the new value loaded. This prints only a prefix, never the full secret:
+   ```bash
+   docker compose -f ~/larchbound/docker-compose.prod.yml exec larchbound-api printenv <PARAM_NAME> | cut -c1-6
+   ```
+   Then exercise one feature that uses it on the live site.
+5. **Revoke the old credential** at its source once traffic is clean (about a day for API keys, immediately if it leaked).
+
+To check a parameter's metadata without decrypting it:
+```bash
+aws ssm get-parameter --name /larchbound/prod/<PARAM_NAME> --region us-east-1 \
+  --query 'Parameter.[Name,Type,Version,LastModifiedDate]'
+```
+
+### Per-secret notes
+
+- **`ANTHROPIC_API_KEY`**: Create the new key in the same `larchbound-prod` workspace so the workspace spend limit still applies. Name it with a date, e.g. `larchbound-prod-lightsail-<YYYY-MM>`. The old and new keys overlap, so rotation causes no downtime. Disable the old key before deleting it. Test with one food macro lookup (cheapest AI call).
+- **`USDA_FDC_API_KEY`**: Request a new key at api.data.gov/signup (it arrives by email). The old key can't be revoked from a dashboard, so simply stop using it.
+- **`JWT_SECRET`**: Generate with `openssl rand -base64 48`. **Rotating this logs every user out:** all existing tokens become invalid immediately, because there's no dual-key verification. Do it off-hours, or right away if it leaked.
+- **`MONGODB_URI`**: In Atlas, edit the app's database user → *Edit Password* → autogenerate. Update the password inside the full URI (`mongodb+srv://<db-user>:<new-password>@<cluster-host>/<db-name>?...`), then follow the general procedure. The old password stops working the moment Atlas saves the change, so do steps 2–3 right after.
+- **`ORIGIN_VERIFY_SECRET`**: Generate with `openssl rand -hex 32`. The middleware accepts only one value, so expect a short window of 403s. Update SSM first, then edit the header in CloudFront → distribution → Origins → API origin → *Add custom header* `X-Origin-Verify`. Wait for the distribution to finish deploying, then immediately reload the box.
+- **`AI_FEATURES_ENABLED`**: Not a secret. Set it to `false` with `--type String --overwrite` and reload the box to disable all AI endpoints (they return 503).
+
+### Rotating the SSM reader's AWS access key
+
+The box authenticates to SSM with a long-lived access key for `larchbound-api-ssm-reader`. Lightsail doesn't support IAM instance roles. Rotate it periodically and whenever someone new gets SSH access:
+
+1. IAM → Users → `larchbound-api-ssm-reader` → Security credentials → **Create access key** (a user can hold two at once).
+2. On the box: `aws configure` and paste the new key ID and secret.
+3. Run `bash ~/larchbound/deploy/fetch-env.sh` to confirm the new key can read SSM.
+4. In IAM, **Deactivate** the old key, wait a day, then **Delete** it.
+
+### If a secret leaks
+
+Rotate it immediately (skip the overlap period), check the source's usage/billing dashboard for abuse, and for `ANTHROPIC_API_KEY` consider setting `AI_FEATURES_ENABLED=false` until the new key is live.
