@@ -71,9 +71,9 @@ Identity/access (do this first, before anything else):
 - [ ] Give that user a scoped policy (Lightsail, S3, CloudFront, Route 53, ACM, Budgets, SSM) rather than `AdministratorAccess` once you know what you're actually touching — currently on `AdministratorAccess` while still discovering the service list; revisit once the build-out stabilizes
 
 Secrets + config:
-- [x] Store `JWT_SECRET`, Atlas connection string, `CORS_ORIGIN`, and `ORIGIN_VERIFY_SECRET` in **SSM Parameter Store** under `/larchbound/prod/` — done 2026-10-11, read by a dedicated scoped IAM user (`larchbound-api-ssm-reader`) via `deploy/fetch-env.sh`. Anthropic API key not yet added (waiting on §5).
+- [x] Store `JWT_SECRET`, Atlas connection string, `CORS_ORIGIN`, and `ORIGIN_VERIFY_SECRET` in **SSM Parameter Store** under `/larchbound/prod/` — done 2026-10-11, read by a dedicated scoped IAM user (`larchbound-api-ssm-reader`) via `deploy/fetch-env.sh`. `ANTHROPIC_API_KEY`, `USDA_FDC_API_KEY` and `AI_FEATURES_ENABLED` added 2026-10-17.
 - [x] Generate a fresh high-entropy `JWT_SECRET` for prod (don't reuse a local dev value) — this single secret can forge tokens for any user if it ever leaks, so treat it like one
-- [x] `.env` / `.env.*` are now gitignored (`.env.example` stays tracked) — confirm `server/.env` was never previously committed in history if you want to be thorough
+- [x] `.env` / `.env.*` are now gitignored (`.env.example` stays tracked) — confirmed 2026-10-17 that `server/.env` was never committed and no real `sk-ant-` key appears anywhere in git history (only the `.env.example` placeholder)
 
 ---
 
@@ -134,9 +134,9 @@ Roughly the order that avoids backtracking:
 3. ✅ Atlas M0 cluster + migrate/point `MONGODB_URI`
 4. ✅ Lightsail instance up, Docker Compose (API only) running, reachable by raw IP first
 5. ✅ Fresh prod `JWT_SECRET` + `MONGODB_URI` + `CORS_ORIGIN` + `ORIGIN_VERIFY_SECRET` in SSM, firewall open to Anywhere + origin-verify header check (not the originally planned managed-prefix-list restriction — Lightsail doesn't support that, see §3)
-6. ✅ AI usage caps + kill switch — implemented and verified (quota logic + 429s + kill switch tested against local DB/server, zero real Claude calls spent beyond one incidental macro lookup during verification) 2026-10-12. Still needs the one-time prod SSM param + `fetch-env.sh` re-run before deploy (see §5 kill switch note).
+6. ✅ AI usage caps + kill switch — implemented and verified (quota logic + 429s + kill switch tested against local DB/server, zero real Claude calls spent beyond one incidental macro lookup during verification) 2026-10-12. Prod SSM param created 2026-10-17 (see step 8).
 7. ✅ ACM cert + CloudFront (frontend + API behaviors) + Route 53 ALIAS records
-8. Anthropic API secrets configuration in cloud
+8. ✅ Anthropic API secrets configuration in cloud — done 2026-10-17. `ANTHROPIC_API_KEY`, `USDA_FDC_API_KEY` (real api.data.gov key, not `DEMO_KEY`) and `AI_FEATURES_ENABLED` added to SSM and pulled by `deploy/fetch-env.sh`. Rotation procedure documented in the README under "Production Secrets & Key Rotation".
 9. GitHub CI/CD pipeline configuration
 10. ✅ AWS Budgets alert + Anthropic Console spend limit, both confirmed active
 11. Add hard cap to number of beta users. I don't want more than 20 for this first round
