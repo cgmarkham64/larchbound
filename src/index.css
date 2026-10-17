@@ -1,5 +1,19 @@
 @import 'tailwindcss';
 
+/* Self-hosted fonts (SIL OFL 1.1) — same weights previously loaded from Google Fonts */
+@import '@fontsource/karla/300.css';
+@import '@fontsource/karla/300-italic.css';
+@import '@fontsource/karla/400.css';
+@import '@fontsource/karla/400-italic.css';
+@import '@fontsource/karla/500.css';
+@import '@fontsource/karla/600.css';
+@import '@fontsource/syne/400.css';
+@import '@fontsource/syne/600.css';
+@import '@fontsource/syne/700.css';
+@import '@fontsource/syne/800.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
 /* ═══════════════════════════════════════
    DESIGN TOKENS
 ═══════════════════════════════════════ */
